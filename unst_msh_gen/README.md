@@ -68,29 +68,14 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-This will install all required packages:
-- scipy
-- packaging
-- netCDF4
-- imageio
-- scikit-image
-- tifffile
-- certifi
-- cftime
-- network
-- pillow
-- setuptools
-
 ### 6- Download the DEM data
 ```bash
-wget https://github.com/dengwirda/dem/releases/download/v0.1.1/RTopo_2_0_4_GEBCO_v2023_60sec_pixel.zip
-unzip RTopo_2_0_4_GEBCO_v2023_60sec_pixel.zip
+aws s3 cp s3://sofar-wx-constants/ww3-model/grid/GEBCO_2025_sub_ice.nc .
 ```
 
 Make sure the DEM file is in the `WW3-tools/unst_msh_gen` directory.
  
 # Usage
-
 ## 7- Activate the virtual environment (if not already active)
 ```bash
 source ./.venv/bin/activate  # On Windows: .\.venv\Scripts\activate
@@ -98,7 +83,7 @@ source ./.venv/bin/activate  # On Windows: .\.venv\Scripts\activate
 
 ## 8- Run the script inside of WW3-tools/unst_msh_gen:
 
-- modify config.init:
+- modify config.ini:
 - Specify the DEM netcdf file using the 'dem_file' in "DataFiles" section.
 - For uniform resolution 'hmax' = 'hmin' = 'hshr' = 'hfun_max' and 'nwave' = 0 in "Spacing" section.
 - To include or exclude Black-Sea change 'black_sea' in "CommandLineArg" section to:
