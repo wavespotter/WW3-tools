@@ -111,8 +111,9 @@ def create_siz():
 
     xlon = np.asarray(data["lon"][:])
     ylat = np.asarray(data["lat"][:])
-    elev = np.asarray(data["bed_elevation"][:]) + \
-           np.asarray(data["ice_thickness"][:])
+    elev = np.asarray(data["elevation"][:])
+#    elev = np.asarray(data["bed_elevation"][:]) + \
+#           np.asarray(data["ice_thickness"][:])
            
     land = form_land_mask_connect(elev, edry=2) >= 1
     high = form_land_mask_connect(elev, edry=8) >= 1
@@ -163,11 +164,11 @@ def create_siz():
     spac.xgrid = xlon * np.pi / 180.
     spac.ygrid = ylat * np.pi / 180.
 
+    # Create meshgrid after hmat processing to ensure matching dimensions
     xmat, ymat = np.meshgrid(
-        spac.xgrid, spac.ygrid, sparse=True)
+        spac.xgrid, spac.ygrid, indexing='xy')
 
-#-- keep high-res. only in a guassian-ish "zoom" region
-
+    # Ensure zoom has same shape as processed hmat
     ymid = 41.5 * np.pi / 180.
     xmid = 30.5 * np.pi / 180.
 
@@ -175,12 +176,15 @@ def create_siz():
         6.75 * (xmat - xmid) ** 2 +
         12.5 * (ymat - ymid) ** 2) ** 2)
     
-    spac.value = hmat*zoom 
+    # Ensure zoom matches hmat dimensions
+    if zoom.shape != hmat.shape:
+        zoom = zoom[:hmat.shape[0], :hmat.shape[1]]
+    
+    spac.value = hmat * zoom
     spac.slope = np.array(dhdx)
     spac.value = np.minimum(hmax, spac.value)
-    
+
 #-- save spacing to a netcdf, for viz. in e.g. paraview
-    
     data = nc.Dataset("spac.nc", "w")
     data.createDimension("nlon", spac.xgrid.size)
     data.createDimension("nlat", spac.ygrid.size) 
