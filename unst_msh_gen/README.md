@@ -31,6 +31,13 @@ xcode-select --install
 sudo apt-get install cmake build-essential
 ```
 
+**On Amazon Linux:**
+```bash
+sudo yum install cmake gcc-c++ make
+# Or on Amazon Linux 2023:
+sudo dnf install cmake gcc-c++ make
+```
+
 **On Windows:**
 - Install CMake from https://cmake.org/download/
 - Install Microsoft Visual Studio Build Tools or MinGW
