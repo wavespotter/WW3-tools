@@ -77,6 +77,8 @@ def create_msh():
     
     jigsawpy.savemsh(opts.hfun_file, spac)
     
+    print(opts)
+    print(spac) 
     # solve |dh/dx| constraints in spacing
     jigsawpy.cmd.marche(opts, spac)
     
@@ -87,6 +89,9 @@ def create_msh():
     opts.mesh_dims = +2             # 2-dim. simplexes
     opts.optm_iter = +64            # number of itereation for the optimization
     opts.optm_cost = "skew-cos"
+
+    # Try to increase memory limits for large grids
+    opts.verbosity = +1  # Enable verbose output to see what's happening
 
     jigsawpy.cmd.jigsaw(opts, mesh)
     
