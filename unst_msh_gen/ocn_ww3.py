@@ -92,7 +92,6 @@ def create_msh():
     
     
 def create_siz():
-
     args = parse_input_args()
     configurations = load_configuration(args.config)
 
@@ -104,8 +103,8 @@ def create_siz():
     ylat = np.asarray(data["lat"][:])
     elev = np.asarray(data["elevation"][:])
 
-    # Downsample if grid is too large (>10000 points in either dimension)
-    max_grid_size = 10000
+    # More aggressive downsampling for JIGSAW limits
+    max_grid_size = 5000  # Reduced from 10000
     if xlon.size > max_grid_size or ylat.size > max_grid_size:
         print(f"Downsampling DEM from {elev.shape} to reduce memory usage...")
 
@@ -180,6 +179,10 @@ def create_siz():
     hmat = np.asarray(remap_pixels_to_corner(hmat), 
                       dtype=spac.FLT32_t)
     
+    # After creating hmat, add additional coarsening if needed
+    if hmat.shape[0] > 3000 or hmat.shape[1] > 3000:
+        hmat = coarsen_spacing_pixels(hmat, 2)  # Coarsen by factor of 2
+
 #-- pack h(x) data to jigsaw datatype: average pixel-to-
 #-- node, careful with periodic BCs.
     
