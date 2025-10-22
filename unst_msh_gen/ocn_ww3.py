@@ -96,37 +96,13 @@ def create_msh():
     jigsawpy.cmd.jigsaw(opts, mesh)
     
     
-def create_siz():
+def create_siz(downsample_factor=20):
     args = parse_input_args()
     configurations = load_configuration(args.config)
 
-    # Load the DEM file from the config
-    dem_file = configurations['dem_file']
-    data = nc.Dataset(dem_file,"r")
-
-    xlon = np.asarray(data["lon"][:])
-    ylat = np.asarray(data["lat"][:])
-    elev = np.asarray(data["elevation"][:])
-
-    # More aggressive downsampling for JIGSAW limits
-    max_grid_size = 5000  # Reduced from 10000
-    if xlon.size > max_grid_size or ylat.size > max_grid_size:
-        print(f"Downsampling DEM from {elev.shape} to reduce memory usage...")
-
-        # Calculate downsampling factors
-        x_factor = max(1, xlon.size // max_grid_size)
-        y_factor = max(1, ylat.size // max_grid_size)
-
-        # Downsample arrays
-        xlon = xlon[::x_factor]
-        ylat = ylat[::y_factor]
-        elev = elev[::y_factor, ::x_factor]
-
-        print(f"New DEM shape: {elev.shape}")
-
     #-- create mesh spacing function for the globe: for uniform mesh hmax = hshr = hmin
 
-    hmax = configurations['hmax'] # maximum spacing [km] 
+    hmax = configurations['hmax'] # maximum spacing [km]
     hshr = configurations['hshr']   # shoreline spacing
     nwav = configurations['nwav']   # number of cells per sqrt(g*H)
     hmin = configurations['hmin']  # minimum spacing
@@ -142,6 +118,17 @@ def create_siz():
     elev = np.asarray(data["elevation"][:])
 #    elev = np.asarray(data["bed_elevation"][:]) + \
 #           np.asarray(data["ice_thickness"][:])
+
+    # Downsample original data by the specified factor
+    if downsample_factor > 1:
+        print(f"Downsampling DEM from {elev.shape} by factor {downsample_factor} to reduce memory usage...")
+
+        # Downsample original arrays by the same factor in both directions
+        xlon = xlon[::downsample_factor]
+        ylat = ylat[::downsample_factor]
+        elev = elev[::downsample_factor, ::downsample_factor]
+
+        print(f"New DEM shape: {elev.shape}")
            
     land = form_land_mask_connect(elev, edry=2) >= 1
     high = form_land_mask_connect(elev, edry=8) >= 1
@@ -181,12 +168,8 @@ def create_siz():
     filt = filter_pixels_harmonic(hmat, exp=1)
     hmat = np.minimum(hmat, filt)
 
-    hmat = np.asarray(remap_pixels_to_corner(hmat), 
+    hmat = np.asarray(remap_pixels_to_corner(hmat),
                       dtype=spac.FLT32_t)
-    
-    # After creating hmat, add additional coarsening if needed
-    if hmat.shape[0] > 3000 or hmat.shape[1] > 3000:
-        hmat = coarsen_spacing_pixels(hmat, 2)  # Coarsen by factor of 2
 
 #-- pack h(x) data to jigsaw datatype: average pixel-to-
 #-- node, careful with periodic BCs.
