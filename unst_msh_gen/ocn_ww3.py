@@ -96,6 +96,30 @@ def create_siz():
     args = parse_input_args()
     configurations = load_configuration(args.config)
 
+    # Load the DEM file from the config
+    dem_file = configurations['dem_file']
+    data = nc.Dataset(dem_file,"r")
+
+    xlon = np.asarray(data["lon"][:])
+    ylat = np.asarray(data["lat"][:])
+    elev = np.asarray(data["elevation"][:])
+
+    # Downsample if grid is too large (>10000 points in either dimension)
+    max_grid_size = 10000
+    if xlon.size > max_grid_size or ylat.size > max_grid_size:
+        print(f"Downsampling DEM from {elev.shape} to reduce memory usage...")
+
+        # Calculate downsampling factors
+        x_factor = max(1, xlon.size // max_grid_size)
+        y_factor = max(1, ylat.size // max_grid_size)
+
+        # Downsample arrays
+        xlon = xlon[::x_factor]
+        ylat = ylat[::y_factor]
+        elev = elev[::y_factor, ::x_factor]
+
+        print(f"New DEM shape: {elev.shape}")
+
     #-- create mesh spacing function for the globe: for uniform mesh hmax = hshr = hmin
 
     hmax = configurations['hmax'] # maximum spacing [km] 
@@ -177,8 +201,11 @@ def create_siz():
         12.5 * (ymat - ymid) ** 2) ** 2)
     
     # Ensure zoom matches hmat dimensions
+    print(zoom.shape)
+    print(hmat.shape)
     if zoom.shape != hmat.shape:
-        zoom = zoom[:hmat.shape[0], :hmat.shape[1]]
+#        zoom = zoom[:hmat.shape[0], :hmat.shape[1]]
+        hmat = hmat[:zoom.shape[0], :zoom.shape[1]]
     
     spac.value = hmat * zoom
     spac.slope = np.array(dhdx)

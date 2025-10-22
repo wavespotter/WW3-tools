@@ -12,7 +12,7 @@ This tool is under active development, with future work focused on variable unst
 
 ### 1- Clone the repository
 ```bash
-git clone https://github.com/NOAA-EMC/WW3-tools
+git clone git@github.com:wavespotter/WW3-tools.git
 cd WW3-tools/unst_msh_gen
 ```
 
@@ -81,9 +81,9 @@ Make sure the DEM file is in the `WW3-tools/unst_msh_gen` directory.
 source ./.venv/bin/activate  # On Windows: .\.venv\Scripts\activate
 ```
 
-## 8- Run the script inside of WW3-tools/unst_msh_gen:
+## 8- Generate the mesh
 
-- modify config.ini:
+- Modify the configuration file (config.ini)
 - Specify the DEM netcdf file using the 'dem_file' in "DataFiles" section.
 - For uniform resolution 'hmax' = 'hmin' = 'hshr' = 'hfun_max' and 'nwave' = 0 in "Spacing" section.
 - To include or exclude Black-Sea change 'black_sea' in "CommandLineArg" section to:
@@ -92,7 +92,9 @@ source ./.venv/bin/activate  # On Windows: .\.venv\Scripts\activate
 - 	1 will exclude the Black sea
 - you can specify the mesh name (jigsaw format or ww3 format) using 'mesh_file' and 'ww3_mesh_file'in "MeshSetting" section 
 
-- $python3 ocn_ww3.py --config config.ini
+```bash
+python3 ocn_ww3.py --config config.ini
+```
 
 NOTE: the output will be gmsh format which will be used by WW3 (specified by 'ww3_mesh_file')
 
