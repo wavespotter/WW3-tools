@@ -87,16 +87,20 @@ def create_msh():
     opts.hfun_scal = "absolute"
     opts.hfun_hmax = configurations['hfun_hmax']           # global maximum mesh resolution (similar to hmax)
     opts.mesh_dims = +2             # 2-dim. simplexes
-    opts.optm_iter = +64            # number of itereation for the optimization
+    # opts.optm_iter = +64            # number of itereation for the optimization
+    opts.optm_iter = +32            # number of itereation for the optimization
     opts.optm_cost = "skew-cos"
 
-    # Try to increase memory limits for large grids
-    opts.verbosity = +1  # Enable verbose output to see what's happening
+    # Additional options to speed up generation:
+    opts.optm_qtol = +1.E-03        # Relaxed quality tolerance (default: 1.E-05)
+    opts.optm_qlim = +0.8          # Lower quality threshold (default: 0.95)
+    opts.mesh_top1 = True           # Use faster topology-1 algorithm
+    opts.verbosity = +1             # Enable verbose output to see what's happening
 
     jigsawpy.cmd.jigsaw(opts, mesh)
     
     
-def create_siz(downsample_factor=20):
+def create_siz(downsample_factor=40):
     args = parse_input_args()
     configurations = load_configuration(args.config)
 
@@ -192,11 +196,16 @@ def create_siz(downsample_factor=20):
         12.5 * (ymat - ymid) ** 2) ** 2)
     
     # Ensure zoom matches hmat dimensions
-    print(zoom.shape)
-    print(hmat.shape)
     if zoom.shape != hmat.shape:
+        print("zoom and hmat have different shapes")
+        print(f"zoom={zoom.shape}")
+        print(f"hmat={hmat.shape}")
+
 #        zoom = zoom[:hmat.shape[0], :hmat.shape[1]]
         hmat = hmat[:zoom.shape[0], :zoom.shape[1]]
+
+        print(f"zoom={zoom.shape}")
+        print(f"hmat={hmat.shape}")
     
     spac.value = hmat * zoom
     spac.slope = np.array(dhdx)
