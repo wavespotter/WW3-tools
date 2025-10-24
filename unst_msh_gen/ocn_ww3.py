@@ -87,20 +87,19 @@ def create_msh():
     opts.hfun_scal = "absolute"
     opts.hfun_hmax = configurations['hfun_hmax']           # global maximum mesh resolution (similar to hmax)
     opts.mesh_dims = +2             # 2-dim. simplexes
-    # opts.optm_iter = +64            # number of itereation for the optimization
-    opts.optm_iter = +32            # number of itereation for the optimization
+    opts.optm_iter = +64            # number of itereation for the optimization
     opts.optm_cost = "skew-cos"
 
     # Additional options to speed up generation:
-    opts.optm_qtol = +1.E-03        # Relaxed quality tolerance (default: 1.E-05)
-    opts.optm_qlim = +0.8          # Lower quality threshold (default: 0.95)
-    opts.mesh_top1 = True           # Use faster topology-1 algorithm
+    #opts.optm_qtol = +1.E-03        # Relaxed quality tolerance (default: 1.E-05)
+    #opts.optm_qlim = +0.8          # Lower quality threshold (default: 0.95)
+    #opts.mesh_top1 = True           # Use faster topology-1 algorithm
     opts.verbosity = +1             # Enable verbose output to see what's happening
 
     jigsawpy.cmd.jigsaw(opts, mesh)
     
     
-def create_siz(downsample_factor=40):
+def create_siz(downsample_factor=20):
     args = parse_input_args()
     configurations = load_configuration(args.config)
 
@@ -201,19 +200,18 @@ def create_siz(downsample_factor=40):
         print(f"zoom={zoom.shape}")
         print(f"hmat={hmat.shape}")
 
-#        zoom = zoom[:hmat.shape[0], :hmat.shape[1]]
         hmat = hmat[:zoom.shape[0], :zoom.shape[1]]
 
         print(f"zoom={zoom.shape}")
         print(f"hmat={hmat.shape}")
     
-    # Smooth and limit spacing function more aggressively
-    hmat = np.maximum(hmat, 50.0)   # Minimum 50km spacing everywhere
-    hmat = np.minimum(hmat, 200.0)  # Maximum 200km spacing
-    
-    # Add more smoothing
-    from scipy.ndimage import gaussian_filter
-    hmat = gaussian_filter(hmat, sigma=2.0)
+    # # Smooth and limit spacing function more aggressively
+    # hmat = np.maximum(hmat, 50.0)   # Minimum 50km spacing everywhere
+    # hmat = np.minimum(hmat, 200.0)  # Maximum 200km spacing
+    # 
+    # # Add more smoothing
+    # from scipy.ndimage import gaussian_filter
+    # hmat = gaussian_filter(hmat, sigma=2.0)
     
     spac.value = hmat * zoom
     spac.slope = np.array(dhdx)
@@ -247,8 +245,9 @@ def inject_dem():
 
     xlon = np.asarray(data["lon"][:])
     ylat = np.asarray(data["lat"][:])
-    elev = np.asarray(data["bed_elevation"][:]) + \
-           np.asarray(data["ice_thickness"][:])
+    elev = np.asarray(data["elevation"][:]) + \
+    #elev = np.asarray(data["bed_elevation"][:]) + \
+    #       np.asarray(data["ice_thickness"][:])
         
     xmid = 0.5 * (xlon[:-1:] + xlon[1::])
     ymid = 0.5 * (ylat[:-1:] + ylat[1::])
