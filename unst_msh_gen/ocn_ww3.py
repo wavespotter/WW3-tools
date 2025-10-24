@@ -77,8 +77,6 @@ def create_msh():
     
     jigsawpy.savemsh(opts.hfun_file, spac)
     
-    print(opts)
-    print(spac) 
     # solve |dh/dx| constraints in spacing
     jigsawpy.cmd.marche(opts, spac)
     
@@ -245,7 +243,7 @@ def inject_dem():
 
     xlon = np.asarray(data["lon"][:])
     ylat = np.asarray(data["lat"][:])
-    elev = np.asarray(data["elevation"][:]) + \
+    elev = np.asarray(data["elevation"][:]) 
     #elev = np.asarray(data["bed_elevation"][:]) + \
     #       np.asarray(data["ice_thickness"][:])
         
