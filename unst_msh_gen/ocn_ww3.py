@@ -246,15 +246,22 @@ def inject_dem():
     elev = np.asarray(data["elevation"][:]) 
     #elev = np.asarray(data["bed_elevation"][:]) + \
     #       np.asarray(data["ice_thickness"][:])
+
+    print(xlon.shape)
+    print(ylat.shape)
+    print(elev.shape)
         
     xmid = 0.5 * (xlon[:-1:] + xlon[1::])
     ymid = 0.5 * (ylat[:-1:] + ylat[1::])
         
-    print(xmid.size) 
-    print(ymid.size)
+    print(xmid.shape) 
+    print(ymid.shape)
 
+    # ffun = RegularGridInterpolator(
+    #     (ymid, xmid), elev, 
+    #     bounds_error=False, fill_value=None)
     ffun = RegularGridInterpolator(
-        (ymid, xmid), elev, 
+        (ylat, xlon), elev, 
         bounds_error=False, fill_value=None)
 
     vert = mesh.point["coord"]
