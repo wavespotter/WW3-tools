@@ -9,4 +9,7 @@ cftime
 network
 pillow
 setuptools==58
+matplotlib
+cartopy
+numpy
 
