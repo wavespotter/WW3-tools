@@ -250,6 +250,9 @@ def inject_dem():
     xmid = 0.5 * (xlon[:-1:] + xlon[1::])
     ymid = 0.5 * (ylat[:-1:] + ylat[1::])
         
+    print(xmid.size) 
+    print(ymid.size)
+
     ffun = RegularGridInterpolator(
         (ymid, xmid), elev, 
         bounds_error=False, fill_value=None)
