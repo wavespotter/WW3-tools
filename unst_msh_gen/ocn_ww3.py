@@ -88,17 +88,22 @@ def create_msh():
     opts.optm_iter = +64            # number of itereation for the optimization
     opts.optm_cost = "skew-cos"
 
+    # Additional options to speed up generation:
+    #opts.optm_qtol = +1.E-03        # Relaxed quality tolerance (default: 1.E-05)
+    #opts.optm_qlim = +0.8          # Lower quality threshold (default: 0.95)
+    #opts.mesh_top1 = True           # Use faster topology-1 algorithm
+    opts.verbosity = +1             # Enable verbose output to see what's happening
+
     jigsawpy.cmd.jigsaw(opts, mesh)
     
     
-def create_siz():
-
+def create_siz(downsample_factor=20):
     args = parse_input_args()
     configurations = load_configuration(args.config)
 
     #-- create mesh spacing function for the globe: for uniform mesh hmax = hshr = hmin
 
-    hmax = configurations['hmax'] # maximum spacing [km] 
+    hmax = configurations['hmax'] # maximum spacing [km]
     hshr = configurations['hshr']   # shoreline spacing
     nwav = configurations['nwav']   # number of cells per sqrt(g*H)
     hmin = configurations['hmin']  # minimum spacing
@@ -111,8 +116,20 @@ def create_siz():
 
     xlon = np.asarray(data["lon"][:])
     ylat = np.asarray(data["lat"][:])
-    elev = np.asarray(data["bed_elevation"][:]) + \
-           np.asarray(data["ice_thickness"][:])
+    elev = np.asarray(data["elevation"][:])
+#    elev = np.asarray(data["bed_elevation"][:]) + \
+#           np.asarray(data["ice_thickness"][:])
+
+    # Downsample original data by the specified factor
+    if downsample_factor > 1:
+        print(f"Downsampling DEM from {elev.shape} by factor {downsample_factor} to reduce memory usage...")
+
+        # Downsample original arrays by the same factor in both directions
+        xlon = xlon[::downsample_factor]
+        ylat = ylat[::downsample_factor]
+        elev = elev[::downsample_factor, ::downsample_factor]
+
+        print(f"New DEM shape: {elev.shape}")
            
     land = form_land_mask_connect(elev, edry=2) >= 1
     high = form_land_mask_connect(elev, edry=8) >= 1
@@ -152,9 +169,9 @@ def create_siz():
     filt = filter_pixels_harmonic(hmat, exp=1)
     hmat = np.minimum(hmat, filt)
 
-    hmat = np.asarray(remap_pixels_to_corner(hmat), 
+    hmat = np.asarray(remap_pixels_to_corner(hmat),
                       dtype=spac.FLT32_t)
-    
+
 #-- pack h(x) data to jigsaw datatype: average pixel-to-
 #-- node, careful with periodic BCs.
     
@@ -163,11 +180,11 @@ def create_siz():
     spac.xgrid = xlon * np.pi / 180.
     spac.ygrid = ylat * np.pi / 180.
 
+    # Create meshgrid after hmat processing to ensure matching dimensions
     xmat, ymat = np.meshgrid(
-        spac.xgrid, spac.ygrid, sparse=True)
+        spac.xgrid, spac.ygrid, indexing='xy')
 
-#-- keep high-res. only in a guassian-ish "zoom" region
-
+    # Ensure zoom has same shape as processed hmat
     ymid = 41.5 * np.pi / 180.
     xmid = 30.5 * np.pi / 180.
 
@@ -175,12 +192,30 @@ def create_siz():
         6.75 * (xmat - xmid) ** 2 +
         12.5 * (ymat - ymid) ** 2) ** 2)
     
-    spac.value = hmat*zoom 
+    # Ensure zoom matches hmat dimensions
+    if zoom.shape != hmat.shape:
+        print("zoom and hmat have different shapes")
+        print(f"zoom={zoom.shape}")
+        print(f"hmat={hmat.shape}")
+
+        hmat = hmat[:zoom.shape[0], :zoom.shape[1]]
+
+        print(f"zoom={zoom.shape}")
+        print(f"hmat={hmat.shape}")
+    
+    # # Smooth and limit spacing function more aggressively
+    # hmat = np.maximum(hmat, 50.0)   # Minimum 50km spacing everywhere
+    # hmat = np.minimum(hmat, 200.0)  # Maximum 200km spacing
+    # 
+    # # Add more smoothing
+    # from scipy.ndimage import gaussian_filter
+    # hmat = gaussian_filter(hmat, sigma=2.0)
+    
+    spac.value = hmat * zoom
     spac.slope = np.array(dhdx)
     spac.value = np.minimum(hmax, spac.value)
-    
+
 #-- save spacing to a netcdf, for viz. in e.g. paraview
-    
     data = nc.Dataset("spac.nc", "w")
     data.createDimension("nlon", spac.xgrid.size)
     data.createDimension("nlat", spac.ygrid.size) 
@@ -208,14 +243,25 @@ def inject_dem():
 
     xlon = np.asarray(data["lon"][:])
     ylat = np.asarray(data["lat"][:])
-    elev = np.asarray(data["bed_elevation"][:]) + \
-           np.asarray(data["ice_thickness"][:])
+    elev = np.asarray(data["elevation"][:]) 
+    #elev = np.asarray(data["bed_elevation"][:]) + \
+    #       np.asarray(data["ice_thickness"][:])
+
+    print(xlon.shape)
+    print(ylat.shape)
+    print(elev.shape)
         
     xmid = 0.5 * (xlon[:-1:] + xlon[1::])
     ymid = 0.5 * (ylat[:-1:] + ylat[1::])
         
+    print(xmid.shape) 
+    print(ymid.shape)
+
+    # ffun = RegularGridInterpolator(
+    #     (ymid, xmid), elev, 
+    #     bounds_error=False, fill_value=None)
     ffun = RegularGridInterpolator(
-        (ymid, xmid), elev, 
+        (ylat, xlon), elev, 
         bounds_error=False, fill_value=None)
 
     vert = mesh.point["coord"]

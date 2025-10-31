@@ -1,0 +1,15 @@
+scipy==1.10.1
+packaging
+netCDF4==1.6.4
+imageio==2.27.0
+scikit-image
+tifffile
+certifi
+cftime
+network
+pillow
+setuptools==58
+matplotlib
+cartopy
+numpy
+

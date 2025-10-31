@@ -8,33 +8,82 @@ This tool is under active development, with future work focused on variable unst
 
 # Installation
 
-## 1- Install jigsawpy (https://github.com/dengwirda/jigsaw-python)
+## Quick Start
 
-## 2- you need following packages:
-- scipy
-- packaging
-- netcdf4
-- imageio
-- scikit-image
-- tifffile
-- certifi
-- cftime
-- network
-- pillow
-- setuptools
+### 1- Clone the repository
+```bash
+git clone git@github.com:wavespotter/WW3-tools.git
+cd WW3-tools/unst_msh_gen
+```
 
-## 3- clone the repo
-- $git clone https://github.com/NOAA-EMC/WW3-tools
-- $cd WW3-tools/unst_msh_gen
+### 2- Install jigsawpy prerequisites
+jigsawpy requires a C++ compiler and CMake. Install them based on your system:
 
-## 4- get the DEM and make sure it is in the WW3-tools/unst_msh_gen directory
-- $wget https://github.com/dengwirda/dem/releases/download/v0.1.1/RTopo_2_0_4_GEBCO_v2023_60sec_pixel.zip
-- $unzip *.zip
+**On macOS:**
+```bash
+brew install cmake
+# C++ compiler comes with Xcode Command Line Tools
+xcode-select --install
+```
+
+**On Ubuntu/Debian:**
+```bash
+sudo apt-get install cmake build-essential
+```
+
+**On Amazon Linux:**
+```bash
+sudo yum install cmake gcc-c++ make
+# Or on Amazon Linux 2023:
+sudo dnf install cmake gcc-c++ make
+```
+
+**On Windows:**
+- Install CMake from https://cmake.org/download/
+- Install Microsoft Visual Studio Build Tools or MinGW
+
+### 3- Create a virtual environment
+```bash
+python3 -m venv ./.venv
+source ./.venv/bin/activate  # On Windows: .\.venv\Scripts\activate
+```
+
+### 4- Install jigsawpy from source
+```bash
+# Clone jigsawpy repository
+git clone https://github.com/dengwirda/jigsaw-python.git
+cd jigsaw-python
+
+# Build and install
+python3 build.py
+pip install .
+
+# Return to unst_msh_gen directory
+cd ../unst_msh_gen
+```
+
+### 5- Install remaining dependencies
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 6- Download the DEM data
+```bash
+aws s3 cp s3://sofar-wx-constants/ww3-model/grid/GEBCO_2025_sub_ice.nc .
+```
+
+Make sure the DEM file is in the `WW3-tools/unst_msh_gen` directory.
  
 # Usage
-## 5- run the script inside of WW3-tools/unst_msh_gen:
+## 7- Activate the virtual environment (if not already active)
+```bash
+source ./.venv/bin/activate  # On Windows: .\.venv\Scripts\activate
+```
 
-- modify config.init:
+## 8- Generate the mesh
+
+- Modify the configuration file (config.ini)
 - Specify the DEM netcdf file using the 'dem_file' in "DataFiles" section.
 - For uniform resolution 'hmax' = 'hmin' = 'hshr' = 'hfun_max' and 'nwave' = 0 in "Spacing" section.
 - To include or exclude Black-Sea change 'black_sea' in "CommandLineArg" section to:
@@ -43,7 +92,9 @@ This tool is under active development, with future work focused on variable unst
 - 	1 will exclude the Black sea
 - you can specify the mesh name (jigsaw format or ww3 format) using 'mesh_file' and 'ww3_mesh_file'in "MeshSetting" section 
 
-- $python3 ocn_ww3.py --config config.ini
+```bash
+python3 ocn_ww3.py --config config.ini
+```
 
 NOTE: the output will be gmsh format which will be used by WW3 (specified by 'ww3_mesh_file')
 
@@ -52,7 +103,7 @@ NOTE: The output mesh will have -180:180 longitude, you can convert this by unis
 	output_file_path: shifted mesh in gmsh format with 0:360 long
 
 
-## 6- Using variable mode:
+## 9- Using variable mode:
 
 - modify config.ini
 - To create a mesh with finer resolution near the US coastlines you can define different region in json format (east coast, west coast and golf od Mexico, Purto Rico, and Hawaii); use the 'window_file' in the "DataFiles" section to specify the windows.
@@ -87,10 +138,11 @@ NOTE:To create the variable mesh based on mesh spacing file "wmask.nc", in the c
 - $python3 ocn_ww3.py --config config.ini
 
 
-## 7- Plotting the mesh info:
+## 10- Plotting the mesh info:
 
 - to plot the elements, mesh size, and bathymetry data, use plot_msh.py and change the 'filename' to ww3 format mesh.
 - $python3 plot_msh.py
 
 ## Contributing
 This is ongoing effort by Ali Salimi-Tarazouj with the great help of Darren Engwirda, JIGSAW developer.
+

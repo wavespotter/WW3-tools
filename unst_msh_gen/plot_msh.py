@@ -210,7 +210,7 @@ def plot_eleminfo(plotdescriptor, xy, ect, distmin, distmax, depth, highlight_no
         # ---------------------------------------
 
 
-        plt.savefig(f'{suffix}_{plotdescriptor}_{name}.png')
+        plt.savefig(f'{suffix}_{plotdescriptor}.png')
         #plt.close()
 
 def main():
